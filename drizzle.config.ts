@@ -8,5 +8,5 @@ export default {
   dbCredentials: {
     url: env.DATABASE_URL,
   },
-  tablesFilter: ["learn-nextjs_*"],
+  // tablesFilter: ["learn-nextjs_*"],
 } satisfies Config;

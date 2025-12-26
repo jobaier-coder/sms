@@ -1,42 +1,88 @@
-import { db } from "@/server/db";
-import { posts } from "@/server/db/schema";
 import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, BookOpen, AlertCircle, Plus } from "lucide-react";
 
-export default async function HomePage() {
-  const allPosts = await db.select().from(posts);
+export default function HomePage() {
+  const stats = [
+    {
+      title: "Active Students",
+      value: "1,234",
+      description: "Across all classes",
+      icon: Users,
+    },
+    {
+      title: "Pending Payments",
+      value: "45",
+      description: "Students with dues",
+      icon: AlertCircle,
+    },
+    {
+      title: "Upcoming Exams",
+      value: "Midterm",
+      description: "Starts in 5 days",
+      icon: BookOpen,
+    },
+  ];
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-          All Posts
-        </h1>
-
-        <div className="flex flex-col gap-4 w-full max-w-2xl">
-          {allPosts.length === 0 ? (
-            <p className="text-center text-xl">No posts yet. Create one!</p>
-          ) : (
-            allPosts.map((post) => (
-              <div
-                key={post.id}
-                className="flex flex-col gap-2 rounded-lg bg-white/10 p-4"
-              >
-                <h2 className="text-2xl font-bold">{post.name}</h2>
-                <p className="text-sm text-white/60">
-                  Created: {post.createdAt.toLocaleString()}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-
-        <Link
-          href="/create-post"
-          className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20"
-        >
-          Create New Post
-        </Link>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground">
+          Welcome back to the Teacher Portal.
+        </p>
       </div>
-    </main>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={stat.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <Link href="/students/new">
+              <Button className="w-full justify-start space-x-2" size="lg" variant="outline">
+                <Plus className="h-5 w-5" />
+                <span>Register New Student</span>
+              </Button>
+            </Link>
+            <Link href="/marks">
+              <Button className="w-full justify-start space-x-2" size="lg" variant="outline">
+                <BookOpen className="h-5 w-5" />
+                <span>Enter Marks</span>
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

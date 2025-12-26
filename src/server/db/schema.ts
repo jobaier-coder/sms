@@ -2,7 +2,7 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { sql } from "drizzle-orm";
-import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
+import { index, int, sqliteTableCreator, text, integer } from "drizzle-orm/sqlite-core";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -10,18 +10,129 @@ import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = sqliteTableCreator((name) => `learn-nextjs_${name}`);
+export const createTable = sqliteTableCreator((name) => `${name}`);
 
-export const posts = createTable(
-  "post",
-  (d) => ({
-    id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-    name: d.text({ length: 256 }),
-    createdAt: d
-      .integer({ mode: "timestamp" })
+// --- Core Entities ---
+
+export const students = createTable(
+  "student",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 256 }).notNull(),
+    fatherName: text("father_name", { length: 256 }).notNull(),
+    motherName: text("mother_name", { length: 256 }).notNull(),
+    phone: text("phone", { length: 20 }).notNull(),
+    address: text("address", { length: 512 }).notNull(),
+    nidDob: text("nid_dob", { length: 50 }).notNull(), // National ID or Birth Certificate
+    createdAt: int("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
-  (t) => [index("name_idx").on(t.name)],
+    updatedAt: int("updated_at", { mode: "timestamp" }).$onUpdate(() => new Date()),
+  }
+);
+
+export const academicYears = createTable(
+  "academic_year",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 50 }).notNull(), // e.g. "2024"
+    isActive: int("is_active", { mode: "boolean" }).default(true).notNull(),
+  }
+);
+
+export const classes = createTable(
+  "class",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 50 }).notNull(), // e.g. "Class 9"
+  }
+);
+
+export const subjects = createTable(
+  "subject",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 100 }).notNull(), // e.g. "Physics"
+    code: text("code", { length: 20 }).notNull(), // e.g. "PHYS101"
+  }
+);
+
+// --- Structure & Mapping ---
+
+export const classSubjects = createTable(
+  "class_subject",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    classId: int("class_id").references(() => classes.id).notNull(),
+    subjectId: int("subject_id").references(() => subjects.id).notNull(),
+    // Group is optional. If null, it's a common subject for the class.
+    // Values: NULL, "SCIENCE", "COMMERCE", "ARTS"
+    group: text("group", { length: 20 }),
+  },
+  (t) => [
+    index("class_subject_class_idx").on(t.classId),
+  ]
+);
+
+// --- Enrollment & Operations ---
+
+export const enrollments = createTable(
+  "enrollment",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    studentId: int("student_id").references(() => students.id).notNull(),
+    academicYearId: int("academic_year_id").references(() => academicYears.id).notNull(),
+    classId: int("class_id").references(() => classes.id).notNull(),
+    // Section: "A", "B", etc.
+    section: text("section", { length: 10 }).notNull(),
+    // Group: "SCIENCE", "COMMERCE", "ARTS" (Nullable for lower classes)
+    group: text("group", { length: 20 }),
+
+    createdAt: int("created_at", { mode: "timestamp" })
+      .default(sql`(unixepoch())`)
+      .notNull(),
+  },
+  (t) => [
+    index("enrollment_student_idx").on(t.studentId),
+    index("enrollment_class_idx").on(t.classId),
+  ]
+);
+
+export const payments = createTable(
+  "payment",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    enrollmentId: int("enrollment_id").references(() => enrollments.id).notNull(),
+    term: text("term", { length: 50 }).notNull(), // "Midterm", "Final"
+    amount: int("amount", { mode: "number" }).notNull(), // Storing as integer (cents) or simple number
+    status: text("status", { length: 20 }).default("PENDING").notNull(), // "PAID", "PENDING"
+    paidAt: int("paid_at", { mode: "timestamp" }),
+  },
+  (t) => [
+    index("payment_enrollment_idx").on(t.enrollmentId),
+  ]
+);
+
+export const exams = createTable(
+  "exam",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    name: text("name", { length: 100 }).notNull(), // "Midterm Exam"
+    academicYearId: int("academic_year_id").references(() => academicYears.id).notNull(),
+  }
+);
+
+export const studentMarks = createTable(
+  "student_mark",
+  {
+    id: int("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+    enrollmentId: int("enrollment_id").references(() => enrollments.id).notNull(),
+    examId: int("exam_id").references(() => exams.id).notNull(),
+    subjectId: int("subject_id").references(() => subjects.id).notNull(),
+    marksObtained: int("marks_obtained", { mode: "number" }).notNull(),
+  },
+  (t) => [
+    index("mark_enrollment_idx").on(t.enrollmentId),
+    index("mark_exam_idx").on(t.examId),
+  ]
 );
