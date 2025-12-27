@@ -10,9 +10,20 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { ChevronLeft, User, CreditCard, History, BookOpen } from "lucide-react";
+
 import { getStudentProfile } from "@/server/student-actions";
 import { notFound } from "next/navigation";
+import { AddPaymentDialog } from "@/components/students/add-payment-dialog";
+import { PrintResultButton } from "@/components/students/print-result-button";
 
 interface PageProps {
     params: {
@@ -28,7 +39,7 @@ export default async function StudentProfilePage({ params }: PageProps) {
         notFound();
     }
 
-    const { student, currentEnrollment, enrollmentHistory, subjects, payments } = profile;
+    const { student, currentEnrollment, enrollmentHistory, subjects, payments, examResults } = profile;
 
     return (
         <div className="space-y-6">
@@ -98,18 +109,30 @@ export default async function StudentProfilePage({ params }: PageProps) {
                         {/* Academic Tab */}
                         <TabsContent value="academic" className="space-y-4 mt-4">
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Enrolled Subjects</CardTitle>
-                                    <CardDescription>Subjects for {currentEnrollment?.year}</CardDescription>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Enrolled Subjects</CardTitle>
+                                        <CardDescription>Subjects for {currentEnrollment?.year}</CardDescription>
+                                    </div>
+                                    {Object.keys(examResults).length > 0 && currentEnrollment && (
+                                        <PrintResultButton
+                                            studentName={student.name}
+                                            studentId={student.id}
+                                            className={currentEnrollment.className}
+                                            section={currentEnrollment.section}
+                                            group={currentEnrollment.group || undefined}
+                                            year={currentEnrollment.year}
+                                            examResults={examResults}
+                                        />
+                                    )}
                                 </CardHeader>
                                 <CardContent>
                                     {subjects.length > 0 ? (
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             {subjects.map(sub => (
-                                                <div key={sub.id} className="p-3 border rounded-md flex justify-between items-center bg-slate-50">
-                                                    <span className="font-medium">{sub.name}</span>
-                                                    <span className="text-xs text-muted-foreground">{sub.code}</span>
-                                                </div>
+                                                <Badge key={sub.id} variant="secondary" className="px-3 py-1.5">
+                                                    {sub.name} ({sub.code})
+                                                </Badge>
                                             ))}
                                         </div>
                                     ) : (
@@ -118,7 +141,87 @@ export default async function StudentProfilePage({ params }: PageProps) {
                                 </CardContent>
                             </Card>
 
-                            {/* Add Marks Summary here later */}
+                            {/* Exam Results */}
+                            {Object.keys(examResults).length > 0 ? (
+                                Object.entries(examResults).map(([examName, marks]) => (
+                                    <Card key={examName}>
+                                        <CardHeader>
+                                            <CardTitle className="text-lg">{examName}</CardTitle>
+                                            <CardDescription>Academic Year: {currentEnrollment?.year}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Subject</TableHead>
+                                                        <TableHead className="text-center">CQ</TableHead>
+                                                        <TableHead className="text-center">MCQ</TableHead>
+                                                        <TableHead className="text-center">Practical</TableHead>
+                                                        <TableHead className="text-center">Total</TableHead>
+                                                        <TableHead className="text-center">Full Marks</TableHead>
+                                                        <TableHead className="text-center">Percentage</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {marks.map((mark: any) => {
+                                                        const percentage = mark.fullMarks 
+                                                            ? ((mark.marksObtained / mark.fullMarks) * 100).toFixed(1)
+                                                            : 'N/A';
+                                                        return (
+                                                            <TableRow key={`${mark.examId}-${mark.subjectId}`}>
+                                                                <TableCell className="font-medium">
+                                                                    {mark.subjectName}
+                                                                    <span className="text-xs text-muted-foreground ml-2">
+                                                                        ({mark.subjectCode})
+                                                                    </span>
+                                                                </TableCell>
+                                                                <TableCell className="text-center">{mark.cqMarks || '-'}</TableCell>
+                                                                <TableCell className="text-center">{mark.mcqMarks || '-'}</TableCell>
+                                                                <TableCell className="text-center">{mark.practicalMarks || '-'}</TableCell>
+                                                                <TableCell className="text-center font-semibold">
+                                                                    {mark.marksObtained}
+                                                                </TableCell>
+                                                                <TableCell className="text-center">{mark.fullMarks || '-'}</TableCell>
+                                                                <TableCell className="text-center">
+                                                                    <Badge variant={parseFloat(percentage) >= 80 ? 'default' : parseFloat(percentage) >= 60 ? 'secondary' : 'outline'}>
+                                                                        {percentage}%
+                                                                    </Badge>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        );
+                                                    })}
+                                                    <TableRow className="bg-muted/50 font-semibold">
+                                                        <TableCell colSpan={4}>Total</TableCell>
+                                                        <TableCell className="text-center">
+                                                            {marks.reduce((sum: number, m: any) => sum + m.marksObtained, 0)}
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            {marks.reduce((sum: number, m: any) => sum + (m.fullMarks || 0), 0)}
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Badge>
+                                                                {(
+                                                                    (marks.reduce((sum: number, m: any) => sum + m.marksObtained, 0) /
+                                                                    marks.reduce((sum: number, m: any) => sum + (m.fullMarks || 0), 0)) *
+                                                                    100
+                                                                ).toFixed(1)}%
+                                                            </Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
+                                        </CardContent>
+                                    </Card>
+                                ))
+                            ) : (
+                                <Card>
+                                    <CardContent className="py-8">
+                                        <p className="text-center text-muted-foreground">
+                                            No exam results available for this academic year.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </TabsContent>
 
                         {/* Financial Tab */}
@@ -129,7 +232,9 @@ export default async function StudentProfilePage({ params }: PageProps) {
                                         <CardTitle>Fee History</CardTitle>
                                         <CardDescription>Payments for {currentEnrollment?.year}</CardDescription>
                                     </div>
-                                    <Button size="sm">Add Payment</Button>
+                                    {currentEnrollment && (
+                                        <AddPaymentDialog enrollmentId={currentEnrollment.id} />
+                                    )}
                                 </CardHeader>
                                 <CardContent>
                                     {payments.length === 0 ? (

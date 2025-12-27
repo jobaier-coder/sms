@@ -68,6 +68,8 @@ export const classSubjects = createTable(
     // Group is optional. If null, it's a common subject for the class.
     // Values: NULL, "SCIENCE", "COMMERCE", "ARTS"
     group: text("group", { length: 20 }),
+    // Full marks for this subject in this class (e.g., 100, 75, 50)
+    fullMarks: int("full_marks", { mode: "number" }).default(100),
   },
   (t) => [
     index("class_subject_class_idx").on(t.classId),
@@ -87,6 +89,8 @@ export const enrollments = createTable(
     section: text("section", { length: 10 }).notNull(),
     // Group: "SCIENCE", "COMMERCE", "ARTS" (Nullable for lower classes)
     group: text("group", { length: 20 }),
+    // Roll number within the class for this academic year
+    roll: int("roll", { mode: "number" }),
 
     createdAt: int("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
@@ -129,10 +133,16 @@ export const studentMarks = createTable(
     enrollmentId: int("enrollment_id").references(() => enrollments.id).notNull(),
     examId: int("exam_id").references(() => exams.id).notNull(),
     subjectId: int("subject_id").references(() => subjects.id).notNull(),
+    cqMarks: int("cq_marks", { mode: "number" }).default(0),
+    mcqMarks: int("mcq_marks", { mode: "number" }).default(0),
+    practicalMarks: int("practical_marks", { mode: "number" }).default(0),
     marksObtained: int("marks_obtained", { mode: "number" }).notNull(),
+    fullMarks: int("full_marks", { mode: "number" }),
+    createdAt: int("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
   },
   (t) => [
     index("mark_enrollment_idx").on(t.enrollmentId),
     index("mark_exam_idx").on(t.examId),
+    index("mark_subject_idx").on(t.subjectId),
   ]
 );
