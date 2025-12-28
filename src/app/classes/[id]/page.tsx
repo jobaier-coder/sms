@@ -18,13 +18,14 @@ import { ChevronLeft, Users, BookOpen, GraduationCap, CreditCard } from "lucide-
 import { notFound } from "next/navigation";
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 export default async function ClassDetailsPage({ params }: PageProps) {
-    const classId = parseInt(params.id);
+    const { id } = await params;
+    const classId = parseInt(id);
     
     const data = await getClassDetailsWithStudents(classId);
 
