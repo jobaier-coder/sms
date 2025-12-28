@@ -1,6 +1,5 @@
 import "@/styles/globals.css";
-import { Sidebar } from "@/components/layout/sidebar";
-import { YearSelector } from "@/components/layout/year-selector";
+import { ClientLayout } from "@/components/layout/client-layout";
 import { getAcademicYears, getActiveYearId } from "@/server/year-actions";
 import { Inter } from "next/font/google";
 
@@ -26,23 +25,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${inter.variable} bg-slate-50`}>
-        <div className="flex h-screen">
-          <Sidebar />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Header Area */}
-            <header className="flex h-16 items-center justify-between border-b bg-white px-6">
-              <h1 className="text-xl font-semibold text-slate-800">
-                Gachihata Palli Academy
-              </h1>
-              <YearSelector years={years} activeYearId={activeYearId} />
-            </header>
-
-            {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto p-6">
-              {children}
-            </main>
-          </div>
-        </div>
+        <ClientLayout years={years} activeYearId={activeYearId}>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );
