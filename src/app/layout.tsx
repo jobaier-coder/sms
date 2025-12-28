@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "High School Management System",
-  description: "Teacher Portal",
+  title: "Gachihata Palli Academy",
+  description: "School Management System",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -32,7 +32,7 @@ export default async function RootLayout({
             {/* Header Area */}
             <header className="flex h-16 items-center justify-between border-b bg-white px-6">
               <h1 className="text-xl font-semibold text-slate-800">
-                School Management
+                Gachihata Palli Academy
               </h1>
               <YearSelector years={years} activeYearId={activeYearId} />
             </header>

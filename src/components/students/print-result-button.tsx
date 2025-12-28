@@ -176,7 +176,7 @@ export function PrintResultButton({
 </head>
 <body>
     <div class="header">
-        <h1>School Management System</h1>
+        <h1>Gachihata Palli Academy</h1>
         <p>Academic Year: ${year}</p>
         <p style="font-size: 20px; font-weight: bold; margin-top: 10px;">Student Academic Report</p>
     </div>
