@@ -26,13 +26,14 @@ import { AddPaymentDialog } from "@/components/students/add-payment-dialog";
 import { PrintResultButton } from "@/components/students/print-result-button";
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 export default async function StudentProfilePage({ params }: PageProps) {
-    const studentId = parseInt(params.id);
+    const { id } = await params;
+    const studentId = parseInt(id);
     const profile = await getStudentProfile(studentId);
 
     if (!profile) {
@@ -163,7 +164,7 @@ export default async function StudentProfilePage({ params }: PageProps) {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {marks.map((mark: any) => {
+                                                    {(marks as any[]).map((mark: any) => {
                                                         const percentage = mark.fullMarks 
                                                             ? ((mark.marksObtained / mark.fullMarks) * 100).toFixed(1)
                                                             : 'N/A';
@@ -193,16 +194,16 @@ export default async function StudentProfilePage({ params }: PageProps) {
                                                     <TableRow className="bg-muted/50 font-semibold">
                                                         <TableCell colSpan={4}>Total</TableCell>
                                                         <TableCell className="text-center">
-                                                            {marks.reduce((sum: number, m: any) => sum + m.marksObtained, 0)}
+                                                            {(marks as any[]).reduce((sum: number, m: any) => sum + m.marksObtained, 0)}
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            {marks.reduce((sum: number, m: any) => sum + (m.fullMarks || 0), 0)}
+                                                            {(marks as any[]).reduce((sum: number, m: any) => sum + (m.fullMarks || 0), 0)}
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <Badge>
                                                                 {(
-                                                                    (marks.reduce((sum: number, m: any) => sum + m.marksObtained, 0) /
-                                                                    marks.reduce((sum: number, m: any) => sum + (m.fullMarks || 0), 0)) *
+                                                                    ((marks as any[]).reduce((sum: number, m: any) => sum + m.marksObtained, 0) /
+                                                                    (marks as any[]).reduce((sum: number, m: any) => sum + (m.fullMarks || 0), 0)) *
                                                                     100
                                                                 ).toFixed(1)}%
                                                             </Badge>

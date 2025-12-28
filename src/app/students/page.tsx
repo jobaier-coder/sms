@@ -30,13 +30,14 @@ import { getClasses } from "@/server/class-actions";
 import { StudentClassFilter } from "@/components/students/class-filter";
 
 interface PageProps {
-    searchParams: {
+    searchParams: Promise<{
         classId?: string;
-    };
+    }>;
 }
 
 export default async function StudentListPage({ searchParams }: PageProps) {
-    const classId = searchParams.classId ? parseInt(searchParams.classId) : undefined;
+    const { classId: classIdParam } = await searchParams;
+    const classId = classIdParam ? parseInt(classIdParam) : undefined;
     const students = await getStudents(classId);
     const classes = await getClasses();
 
